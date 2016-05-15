@@ -187,6 +187,7 @@ top(int argc, char **argv) {
 
     while (true) {
         std::cout << "Exited commands" << std::endl;
+        sleep(1);
         //continue looping so setpoint is still over the ball  
     };
     // --------------------------------------------------------------------------
@@ -291,7 +292,6 @@ commands(Autopilot_Interface &api,
 //Function to generate array of setpoints give a search box diagonal distance
 
 bool checkFrame(VideoCapture &cam, std::vector<Vec3f> &circles) {
-    bool found = false;
     Mat frame; //Mat to store current frame from camera
     Mat hsv; //Mat to store transformed HSV space image
     Mat upLim; //Mat to store HSV image with upper limit applied
@@ -341,6 +341,7 @@ bool checkFrame(VideoCapture &cam, std::vector<Vec3f> &circles) {
         
         return true;
     }
+    return false;
 }
 
 void genSetPoints(const float &D, Autopilot_Interface &api,
