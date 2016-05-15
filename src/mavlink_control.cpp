@@ -70,8 +70,7 @@
 //   TOP
 // ------------------------------------------------------------------------------
 
-int
-top(int argc, char **argv) {
+int top(int argc, char **argv) {
 
     // --------------------------------------------------------------------------
     //   PARSE THE COMMANDS
@@ -388,7 +387,7 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Global_Pos << "Set point reached within tolerance\n";
         Attitude << "Set point reached within tolerance\n";
         HR_IMU << "Set point reached within tolerance\n";
-    };
+    }
 
     if (flag == 20) {
         Local_Pos << "Timestamp [usec], X Position, Y Position, Z Position, "
@@ -408,14 +407,14 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
                 "xgyro [rad/s], ygyro [rad/s], zgyro [rad/s], "
                 "xmag [Gauss], ymag [Gauss], zmag [Gauss]\n";
         HR_IMU << "IMU = [...\n";
-    };
+    }
 
     if (flag == 30) {
         Local_Pos.open("Out_Local Position and Target", std::ofstream::out | std::ofstream::trunc);
         Global_Pos.open("Out_Global Position and Target", std::ofstream::out | std::ofstream::trunc);
         Attitude.open("Out_Attitude", std::ofstream::out | std::ofstream::trunc);
         HR_IMU.open("Out_IMU Data", std::ofstream::out | std::ofstream::trunc);
-    };
+    }
 
     if (flag == 31) {
         Local_Pos.close();
@@ -430,13 +429,12 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Global_Pos.flush();
         Attitude.flush();
         HR_IMU.flush();
-    };
+    }
 
 
 }
 
-void
-parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate, float &D) {
+void parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate, float &D) {
 
     // string for command line usage
     const char *commandline_usage = "usage: mavlink_serial -d <devicename> -b <baudrate> -D <search box in meters>";
@@ -503,14 +501,14 @@ quit_handler(int sig) {
     // autopilot interface
     try {
         autopilot_interface_quit->handle_quit(sig);
-    } catch (int error) {
     }
+	catch (int error) {}
 
     // serial port
     try {
         serial_port_quit->handle_quit(sig);
-    } catch (int error) {
     }
+	catch (int error) {}
 
     // end program here
     exit(0);
@@ -522,17 +520,16 @@ quit_handler(int sig) {
 //   Main
 // ------------------------------------------------------------------------------
 
-int
-main(int argc, char **argv) {
+int main(int argc, char **argv) {
     // This program uses throw, wrap one big try/catch here
     try {
         int result = top(argc, argv);
         return result;
-    } catch (int error) {
+    }
+	catch (int error) {
         fprintf(stderr, "mavlink_control threw exception %i \n", error);
         return error;
     }
-
 }
 
 
