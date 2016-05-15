@@ -47,8 +47,6 @@
  *
  */
 
-
-
 // ------------------------------------------------------------------------------
 //   Includes
 // ------------------------------------------------------------------------------
@@ -56,19 +54,15 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
-#include "mavlink_control.h"
 #include <cassert>
-// <TODO: Include Open CV Libraries>
-/*
-#include <iostream>
 #include <unistd.h>
-#include <vector>
 #include <opencv2/opencv.hpp>
- */
 
+#include "mavlink_control.h"
 // ------------------------------------------------------------------------------
 //   TOP
 // ------------------------------------------------------------------------------
+using namespace cv;
 
 int top(int argc, char **argv) {
 
@@ -84,7 +78,9 @@ int top(int argc, char **argv) {
 #endif
     int baudrate = 57600;
     float D = 50; //[m] Search box defaults to 50 m diagonal length
-
+    int videoN(0); //set video device number
+    // <TODO: Add command line argument to set video device number (int)>
+    // <TODO: Add command line argument to set video resolution (test to determine run times with typical resolutions)>
     // do the parse, will throw an int if it fails
     // should throw error if size of search box is not specified
     parse_commandline(argc, argv, uart_name, baudrate, D);
@@ -162,6 +158,22 @@ int top(int argc, char **argv) {
 
     genSetPoints(D, autopilot_interface, xSetPoints, ySetPoints);
 
+    // <TODO: Throw this into a function>
+    // Instantiate VideoCapture object 
+    VideoCapture cam(videoN); //open video1
+    sleep(1); //sleep for a second
+
+    //set camera resolution
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+
+    //error checking for camera 
+    if (!cam.isOpened()) {
+        std::cout << "Camera device " << videoN << "could not be opened. Exiting"
+                << std::endl;
+        return -1;
+    }
+
     // --------------------------------------------------------------------------
     //   RUN COMMANDS
     // --------------------------------------------------------------------------
@@ -170,10 +182,11 @@ int top(int argc, char **argv) {
      * Now we can implement the algorithm we want on top of the autopilot interface
      */
     // <Modify the commands function below>
-    commands(autopilot_interface, xSetPoints, ySetPoints);
+    commands(autopilot_interface, xSetPoints, ySetPoints, cam);
 
     while (true) {
         std::cout << "Exited commands" << std::endl;
+        sleep(1);
         //continue looping so setpoint is still over the ball  
     };
     // --------------------------------------------------------------------------
@@ -185,7 +198,6 @@ int top(int argc, char **argv) {
      */
     autopilot_interface.stop();
     serial_port.stop();
-
 
     // --------------------------------------------------------------------------
     //   DONE
@@ -202,12 +214,15 @@ int top(int argc, char **argv) {
 // ------------------------------------------------------------------------------
 
 void
-commands(Autopilot_Interface &api, const std::vector<float> &xSetPoints, const std::vector<float> &ySetPoints) {
+commands(Autopilot_Interface &api,
+        const std::vector<float> &xSetPoints, const std::vector<float> &ySetPoints,
+        VideoCapture &cam) {
 
     // <NOTE: LOCAL AXIS SYSTEM IS NED (NORTH EAST DOWN) SO POSITIVE Z SETPOINT IS LOSS IN ALTITUDE>
     float setAlt = 7.0; //[m] set set point altitude above initial altitude
-    float setTolerance = 2.0; //tolerance for set point (how close before its cleared)
+    float setTolerance = 1.0; //tolerance for set point (how close before its cleared)
     uint8_t ndx(0);
+    std::vector<Vec3f> circles; //vector for circles found by OpenCV
     usleep(100); // give some time to let it sink in
 
     bool setPointReached = false, ballFound = false;
@@ -241,16 +256,17 @@ commands(Autopilot_Interface &api, const std::vector<float> &xSetPoints, const s
             mavlink_local_position_ned_t lpos = api.current_messages.local_position_ned;
 
             // <TODO: Insert CV Code here>
+            ballFound = checkFrame(cam, circles);
 
             // if ball is found, update setpoint to current position and return            
             if (ballFound) {
                 set_position(lpos.x, lpos.y, lpos.z, sp);
                 api.update_setpoint(sp);
+                genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
                 return;
             }
 
             // <TODO: Implement position check to occur less often (lower priority) >
-
             if (abs(lpos.x - sp.x) < setTolerance && abs(lpos.y - sp.y) < setTolerance && abs(lpos.z - sp.z) < setTolerance) {
                 setPointReached = true;
                 break;
@@ -273,6 +289,59 @@ commands(Autopilot_Interface &api, const std::vector<float> &xSetPoints, const s
 }
 
 //Function to generate array of setpoints give a search box diagonal distance
+
+bool checkFrame(VideoCapture &cam, std::vector<Vec3f> &circles) {
+    Mat frame; //Mat to store current frame from camera
+    Mat hsv; //Mat to store transformed HSV space image
+    Mat upLim; //Mat to store HSV image with upper limit applied
+    Mat downLim; //Mat to store HSV image with lower limit applied
+    Mat redImg; //Mat to store HSV image with combined upper and lower limits
+
+    //capture frame
+    cam >> frame;
+
+    //convert to HSV space
+    cvtColor(frame, hsv, CV_BGR2HSV);
+
+    // <TODO: remove hard coded limits>
+    inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downLim);
+    inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upLim);
+
+    //combine two ranges into single image
+    addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
+
+    //apply Gaussian blur to improve detection
+    GaussianBlur(redImg, redImg, Size(9, 9), 2, 2);
+
+    //apply Hough transform (configured to only really work at 7m)
+    //inputArray, outputArray, method, dp, minDistance, param1, param2, minR, maxR
+    //redImg is 320x240
+    HoughCircles(redImg, circles, CV_HOUGH_GRADIENT, 1, redImg.rows / 2, 50, 24, 5, 9);
+    //if circle is found, save image and return true
+    if (circles.size() > 0) {
+        
+        // clone original frame to draw circle on
+        Mat endFrame = frame.clone();
+
+        // draw circle
+        for (size_t i = 0; i < circles.size(); i++) {
+            Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+            int radius = cvRound(circles[i][2]);
+            // circle center
+            circle(endFrame, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+            // circle outline
+            circle(endFrame, center, radius, Scalar(0, 0, 255), 3, 8, 0);
+        }
+        
+        // save images
+        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/OriginalImg.jpg", frame);
+        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/HSVImg.jpg", redImg);
+        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/FinalImg.jpg", endFrame);
+        
+        return true;
+    }
+    return false;
+}
 
 void genSetPoints(const float &D, Autopilot_Interface &api,
         vector<float> &xSetPoints, vector<float> &ySetPoints) {
