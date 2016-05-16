@@ -97,6 +97,7 @@
 // ----------------------------------------------------------------------------------
 //   Serial Port Manager Class
 // ----------------------------------------------------------------------------------
+
 /*
  * Serial Port Class
  *
@@ -106,11 +107,8 @@
  * a serialization interface.  To help with read and write pthreading, it
  * gaurds any port operation with a pthread mutex.
  */
-class Serial_Port
-{
-
+class Serial_Port {
 public:
-
 	Serial_Port();
 	Serial_Port(const char *uart_name_, int baudrate_);
 	void initialize_defaults();
@@ -118,8 +116,8 @@ public:
 
 	bool debug;
 	const char *uart_name;
-	int  baudrate;
-	int  status;
+	int baudrate;
+	int status;
 
 	int read_message(mavlink_message_t &message);
 	int write_message(const mavlink_message_t &message);
@@ -130,17 +128,16 @@ public:
 	void start();
 	void stop();
 
-	void handle_quit( int sig );
+	void handle_quit(int sig);
 
 private:
-
-	int  fd;
+	int fd;
 	mavlink_status_t lastStatus;
-	pthread_mutex_t  lock;
+	pthread_mutex_t lock;
 
-	int  _open_port(const char* port);
-	bool _setup_port(int baud, int data_bits, int stop_bits, bool parity, bool hardware_control);
-	int  _read_port(uint8_t &cp);
+	int _open_port(const char* port);
+	bool _setup_port(int baud);
+	int _read_port(uint8_t &cp);
 	int _write_port(char *buf, unsigned len);
 
 };

@@ -102,7 +102,7 @@
  *     MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_YAW_ANGLE;
  */
 
-                                                // bit number  876543210987654321
+// bit number  876543210987654321
 #define MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_POSITION     0b0000110111111000
 #define MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_VELOCITY     0b0000110111000111
 #define MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_ACCELERATION 0b0000110000111111
@@ -132,10 +132,9 @@ void* start_autopilot_interface_write_thread(void *args);
 //   Data Structures
 // ------------------------------------------------------------------------------
 
-struct Time_Stamps
-{
-	Time_Stamps()
-	{
+struct Time_Stamps {
+
+	Time_Stamps() {
 		reset_timestamps();
 	}
 
@@ -151,8 +150,7 @@ struct Time_Stamps
 	uint64_t attitude;
 
 	void
-	reset_timestamps()
-	{
+	reset_timestamps() {
 		heartbeat = 0;
 		sys_status = 0;
 		battery_status = 0;
@@ -171,7 +169,6 @@ struct Time_Stamps
 // Struct containing information on the MAV we are currently connected to
 
 struct Mavlink_Messages {
-
 	int sysid;
 	int compid;
 
@@ -212,8 +209,7 @@ struct Mavlink_Messages {
 	Time_Stamps time_stamps;
 
 	void
-	reset_timestamps()
-	{
+	reset_timestamps() {
 		time_stamps.reset_timestamps();
 	}
 
@@ -223,6 +219,7 @@ struct Mavlink_Messages {
 // ----------------------------------------------------------------------------------
 //   Autopilot Interface Class
 // ----------------------------------------------------------------------------------
+
 /*
  * Autopilot Interface Class
  *
@@ -237,9 +234,7 @@ struct Mavlink_Messages {
  * important that one way or another this program signals offboard mode exit,
  * otherwise the vehicle will go into failsafe.
  */
-class Autopilot_Interface
-{
-
+class Autopilot_Interface {
 public:
 
 	Autopilot_Interface();
@@ -249,9 +244,9 @@ public:
 	char reading_status;
 	char writing_status;
 	char control_status;
-    uint64_t write_count;
+	uint64_t write_count;
 
-    int system_id;
+	int system_id;
 	int autopilot_id;
 	int companion_id;
 
@@ -260,11 +255,11 @@ public:
 
 	void update_setpoint(mavlink_set_position_target_local_ned_t setpoint);
 	void read_messages();
-	int  write_message(mavlink_message_t message);
+	int write_message(mavlink_message_t message);
 
-        int send_cpslo_msg(uint8_t status);
-        int send_optical_flow_msg();
-        
+	int send_cpslo_msg(uint8_t status);
+	int send_optical_flow_msg();
+
 	void enable_offboard_control();
 	void disable_offboard_control();
 
@@ -274,7 +269,7 @@ public:
 	void start_read_thread();
 	void start_write_thread(void);
 
-	void handle_quit( int sig );
+	void handle_quit(int sig);
 
 
 private:
@@ -291,7 +286,7 @@ private:
 	void read_thread();
 	void write_thread(void);
 
-	int toggle_offboard_control( bool flag );
+	int toggle_offboard_control(bool flag);
 	void write_setpoint();
 
 };
