@@ -82,10 +82,10 @@ int top(int argc, char **argv);
 
 void commands(Autopilot_Interface &autopilot_interface,
 	const std::vector<float> &xSetPoints, const std::vector<float> &ySetPoints,
-	cv::VideoCapture &cam);
+	cv::VideoCapture &cam, cv::VideoWriter &video);
 void parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate, float &D);
 
-bool checkFrame(cv::VideoCapture &cam, std::vector<cv::Vec3f> &circles);
+bool checkFrame(cv::VideoCapture &cam, cv::VideoWriter &video, std::vector<cv::Vec3f> &circles);
 void genSetPoints(const float &D, Autopilot_Interface &api,
 	vector<float> &xSetPoints, vector<float> &ySetPoints);
 void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
