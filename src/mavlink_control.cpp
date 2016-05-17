@@ -280,6 +280,10 @@ void commands(Autopilot_Interface &api,
         sleep(1); //wait a second for vehicle to catch up
     }
 
+    // <Ends video capture if end of set points is reached>
+    cam.release();
+    video.release();
+    
     //set final yaw to 0 radians (expected to be pointing north)
     set_yaw(0.0, sp);
     api.update_setpoint(sp);
