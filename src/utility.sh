@@ -1,6 +1,10 @@
 #!/bin/bash
 
 cd /home/pi/NGCP/RPI_cpslo
+
+git fetch
+git pull
+
 mkdir build
 cd build
 cmake ..
