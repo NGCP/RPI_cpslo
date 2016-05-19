@@ -284,7 +284,7 @@ void commands(Autopilot_Interface &api,
     // <Ends video capture if end of set points is reached>
     cam.release();
     video.release();
-    
+
     //set final yaw to 0 radians (expected to be pointing north)
     set_yaw(0.0, sp);
     api.update_setpoint(sp);
@@ -363,22 +363,22 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
     float s45(0.707107), c45(0.707107); //store look up values for sin/cos 45
 
     //store target positions
-    float ix, iy;
-//    float hp;
+    float ix, iy, hp;
+
     ix = api.initial_position.x;
     iy = api.initial_position.y;
 
     // add a set point half way north
-//    hp = D * s45 / 2;
-    //while dx
+    hp = D * s45 / 2;
+
     while (dx < (D * s45)) {
         //increment dy sgn * D * s45
         sgn = 1 - sgn;
         dy = sgn * D * s45;
 
-//        //add a half way north set point
-//        ySetPoints.push_back(hp + iy);
-//        xSetPoints.push_back(dx + ix);
+        //add a half way north set point
+        ySetPoints.push_back(hp + iy);
+        xSetPoints.push_back(dx + ix);
 
         //pushback dy + initial_position
         ySetPoints.push_back(dy + iy);
