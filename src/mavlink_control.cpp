@@ -52,6 +52,7 @@
 // ------------------------------------------------------------------------------
 #include <iostream>
 #include <fstream>
+#include <ctime>
 #include <cmath>
 #include <vector>
 #include <cassert>
@@ -140,7 +141,7 @@ int top(int argc, char **argv) {
      * This is where the port is opened, and read and write threads are started.
      */
     // <Opens serial port on pc and sets up port with baud rate and 8N1>
-    // Will print OPEN PORT 
+    // Will print OPEN PORT
     // Will print Connected to %s with %d baud ...
     serial_port.start();
 
@@ -159,7 +160,7 @@ int top(int argc, char **argv) {
     genSetPoints(D, autopilot_interface, xSetPoints, ySetPoints);
 
     // <TODO: Throw this into a function>
-    // Instantiate VideoCapture object 
+    // Instantiate VideoCapture object
     VideoCapture cam(videoN); //open video1
     sleep(1); //sleep for a second
 
@@ -167,7 +168,7 @@ int top(int argc, char **argv) {
     cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
     cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
 
-    //error checking for camera 
+    //error checking for camera
     if (!cam.isOpened()) {
         std::cout << "Camera device " << videoN << "could not be opened. Exiting"
                 << std::endl;
@@ -187,7 +188,7 @@ int top(int argc, char **argv) {
     while (true) {
         std::cout << "Exited commands" << std::endl;
         sleep(1);
-        //continue looping so setpoint is still over the ball  
+        //continue looping so setpoint is still over the ball
     };
     // --------------------------------------------------------------------------
     //   THREAD and PORT SHUTDOWN
@@ -257,7 +258,7 @@ void commands(Autopilot_Interface &api,
             // <TODO: Insert CV Code here>
             ballFound = checkFrame(cam, circles);
 
-            // if ball is found, update setpoint to current position and return            
+            // if ball is found, update setpoint to current position and return
             if (ballFound) {
                 set_position(lpos.x, lpos.y, lpos.z, sp);
                 api.update_setpoint(sp);
@@ -384,7 +385,7 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
         //assert dy is bounded
         assert(dy <= iy + D);
 
-        //assert dx is bounded 
+        //assert dx is bounded
         assert(dx <= ix + D);
 
     }
@@ -400,7 +401,7 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
 // throws EXIT_FAILURE if could not open the port
 
 void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
-        std::ofstream &Attitude, std::ofstream &HR_IMU, Autopilot_Interface &api, int flag) {
+        std::ofstream &Attitude, std::ofstream &HR_IMU, Autopilot_Interface &api,int flag) {
 
     // Specify type of message to write to data logs with flag
     // <TODO: Make the flags an enum>
@@ -497,6 +498,8 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Attitude.close();
         HR_IMU.close();
         flush = false; //dont need to flush if streams already closed
+
+        append_to_data_log();
     }
     if (flush) {
         //flush buffer
@@ -505,8 +508,64 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Attitude.flush();
         HR_IMU.flush();
     }
+}
 
+void append_to_data_log() {
+   time_t cur_time_stamp;
+   string line;
 
+   /*Creating file based on timestamp*/
+   time(&cur_time_stamp);
+   std::ofstream data_log;
+   data_log.open(ctime(&cur_time_stamp));
+
+   /*Read from Out_Attitude File*/
+   std::ifstream attitude_file ("Out_Attitude");
+   if (attitude_file.is_open()) {
+      while ( getline (attitude_file,line) ) {
+         data_log << line << '\n';
+      }
+
+      attitude_file.close();
+   }
+
+   data_log << '\n' << '\n';
+
+   std::ifstream global_file ("Out_Global Position and Target");
+      if (global_file.is_open()) {
+         while ( getline (global_file,line) ) {
+            data_log << line << '\n';
+         }
+
+         global_file.close();
+         remove("Out_Global Position and Target");
+      }
+
+   data_log << '\n' << '\n';
+
+   std::ifstream local_file ("Out_Local Position and Target");
+      if (local_file.is_open()) {
+         while ( getline (local_file,line) ) {
+            data_log << line << '\n';
+         }
+
+         local_file.close();
+         remove("Out_Local Position and Target");
+      }
+
+   data_log << '\n' << '\n';
+
+   std::ifstream imu_file ("Out_IMU Data");
+      if (imu_file.is_open()) {
+         while ( getline (imu_file,line) ) {
+            data_log << line << '\n';
+         }
+
+         imu_file.close();
+         remove ("Out_IMU Data");
+      }
+
+   data_log.close();
 }
 
 void parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate, float &D) {
@@ -603,5 +662,3 @@ int main(int argc, char **argv) {
         return error;
     }
 }
-
-
