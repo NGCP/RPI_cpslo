@@ -90,9 +90,9 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
 	vector<float> &xSetPoints, vector<float> &ySetPoints);
 void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
 	std::ofstream &Attitude, std::ofstream &HR_IMU, Autopilot_Interface &api, int flag);
+void append_to_data_log();
 
 // quit handler
 Autopilot_Interface *autopilot_interface_quit;
 Serial_Port *serial_port_quit;
 void quit_handler(int sig);
-
