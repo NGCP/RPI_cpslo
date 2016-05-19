@@ -122,6 +122,7 @@ int top(int argc, char **argv) {
      *
      */
     // <Instantiates object and initializes values to 0>
+	sleep(5);
     Autopilot_Interface autopilot_interface(&serial_port);
 
     /*
@@ -220,7 +221,7 @@ void commands(Autopilot_Interface &api,
         VideoCapture &cam, VideoWriter &video) {
 
     // <NOTE: LOCAL AXIS SYSTEM IS NED (NORTH EAST DOWN) SO POSITIVE Z SETPOINT IS LOSS IN ALTITUDE>
-    float setAlt = 7.0; //[m] set set point altitude above initial altitude
+    float setAlt = 6.0; //[m] set set point altitude above initial altitude
     float setTolerance = 1.0; //tolerance for set point (how close before its cleared)
     uint8_t ndx(0);
     std::vector<Vec3f> circles; //vector for circles found by OpenCV
