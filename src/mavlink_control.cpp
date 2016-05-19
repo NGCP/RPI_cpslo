@@ -162,11 +162,12 @@ int top(int argc, char **argv) {
     // <TODO: Throw this into a function>
     // Instantiate VideoCapture object
     VideoCapture cam(videoN); //open video1
+    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M','J','P','G'), 30, Size(640,360), true);
     sleep(1); //sleep for a second
 
     //set camera resolution
-    cam.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 360);
 
     //error checking for camera
     if (!cam.isOpened()) {
@@ -183,7 +184,7 @@ int top(int argc, char **argv) {
      * Now we can implement the algorithm we want on top of the autopilot interface
      */
     // <Modify the commands function below>
-    commands(autopilot_interface, xSetPoints, ySetPoints, cam);
+    commands(autopilot_interface, xSetPoints, ySetPoints, cam, video);
 
     while (true) {
         std::cout << "Exited commands" << std::endl;
@@ -216,7 +217,7 @@ int top(int argc, char **argv) {
 
 void commands(Autopilot_Interface &api,
         const std::vector<float> &xSetPoints, const std::vector<float> &ySetPoints,
-        VideoCapture &cam) {
+        VideoCapture &cam, VideoWriter &video) {
 
     // <NOTE: LOCAL AXIS SYSTEM IS NED (NORTH EAST DOWN) SO POSITIVE Z SETPOINT IS LOSS IN ALTITUDE>
     float setAlt = 7.0; //[m] set set point altitude above initial altitude
@@ -256,10 +257,11 @@ void commands(Autopilot_Interface &api,
             mavlink_local_position_ned_t lpos = api.current_messages.local_position_ned;
 
             // <TODO: Insert CV Code here>
-            ballFound = checkFrame(cam, circles);
+            ballFound = checkFrame(cam, video, circles);
 
             // if ball is found, update setpoint to current position and return
             if (ballFound) {
+                cam.release();
                 set_position(lpos.x, lpos.y, lpos.z, sp);
                 api.update_setpoint(sp);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
@@ -279,6 +281,10 @@ void commands(Autopilot_Interface &api,
         sleep(1); //wait a second for vehicle to catch up
     }
 
+    // <Ends video capture if end of set points is reached>
+    cam.release();
+    video.release();
+    
     //set final yaw to 0 radians (expected to be pointing north)
     set_yaw(0.0, sp);
     api.update_setpoint(sp);
@@ -290,7 +296,7 @@ void commands(Autopilot_Interface &api,
 
 //Function to generate array of setpoints give a search box diagonal distance
 
-bool checkFrame(VideoCapture &cam, std::vector<Vec3f> &circles) {
+bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circles) {
     Mat frame; //Mat to store current frame from camera
     Mat hsv; //Mat to store transformed HSV space image
     Mat upLim; //Mat to store HSV image with upper limit applied
@@ -299,6 +305,8 @@ bool checkFrame(VideoCapture &cam, std::vector<Vec3f> &circles) {
 
     //capture frame
     cam >> frame;
+    resize(frame, frame, Size(640, 360), 0, 0, INTER_CUBIC);
+    video.write(frame);
 
     //convert to HSV space
     cvtColor(frame, hsv, CV_BGR2HSV);
@@ -355,21 +363,22 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
     float s45(0.707107), c45(0.707107); //store look up values for sin/cos 45
 
     //store target positions
-    float ix, iy, hp;
+    float ix, iy;
+//    float hp;
     ix = api.initial_position.x;
     iy = api.initial_position.y;
 
     // add a set point half way north
-    hp = D * s45 / 2;
+//    hp = D * s45 / 2;
     //while dx
     while (dx < (D * s45)) {
         //increment dy sgn * D * s45
         sgn = 1 - sgn;
         dy = sgn * D * s45;
 
-        //add a half way north set point
-        ySetPoints.push_back(hp + iy);
-        xSetPoints.push_back(dx + ix);
+//        //add a half way north set point
+//        ySetPoints.push_back(hp + iy);
+//        xSetPoints.push_back(dx + ix);
 
         //pushback dy + initial_position
         ySetPoints.push_back(dy + iy);
