@@ -12,5 +12,6 @@ make
 
 ./rpi_cpslo
 
+# Kill rpi_cpslo commands:
 #pid = $(ps -aux | grep rpi_cpslo | tee > (head -n 1) | awk -F ' ' {print $2})
 #kill -i $(pid)
