@@ -60,10 +60,15 @@
 #include <opencv2/opencv.hpp>
 
 #include "mavlink_control.h"
+#include "input_params.h"
+#include <iostream>
 // ------------------------------------------------------------------------------
 //   TOP
 // ------------------------------------------------------------------------------
 using namespace cv;
+
+// <TODO: remove this from being global later>
+input_params inputs = input_params();
 
 int top(int argc, char **argv) {
 
@@ -77,9 +82,9 @@ int top(int argc, char **argv) {
 #else
     char *uart_name = (char*) "/dev/ttyAMA0";
 #endif
-    int baudrate = 57600;
-    float D = 50; //[m] Search box defaults to 50 m diagonal length
-    int videoN(0); //set video device number
+    int baudrate = inputs.getBaud();
+    float D = inputs.getDiagonal(); //[m] Search box defaults to 50 m diagonal length
+    int videoN(inputs.getVideo_ID()); //set video device number
     // <TODO: Add command line argument to set video device number (int)>
     // <TODO: Add command line argument to set video resolution (test to determine run times with typical resolutions)>
     // do the parse, will throw an int if it fails
@@ -163,12 +168,12 @@ int top(int argc, char **argv) {
     // <TODO: Throw this into a function>
     // Instantiate VideoCapture object
     VideoCapture cam(videoN); //open video1
-    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M','J','P','G'), 30, Size(640,360), true);
+    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M','J','P','G'), 30, Size(inputs.getVideo_Width(),inputs.getVideo_Height()), true);
     sleep(1); //sleep for a second
 
     //set camera resolution
-    cam.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    cam.set(CV_CAP_PROP_FRAME_HEIGHT, 360);
+    cam.set(CV_CAP_PROP_FRAME_WIDTH, inputs.getVideo_Width());
+    cam.set(CV_CAP_PROP_FRAME_HEIGHT, inputs.getVideo_Height());
 
     //error checking for camera
     if (!cam.isOpened()) {
@@ -221,8 +226,8 @@ void commands(Autopilot_Interface &api,
         VideoCapture &cam, VideoWriter &video) {
 
     // <NOTE: LOCAL AXIS SYSTEM IS NED (NORTH EAST DOWN) SO POSITIVE Z SETPOINT IS LOSS IN ALTITUDE>
-    float setAlt = 6.0; //[m] set set point altitude above initial altitude
-    float setTolerance = 1.0; //tolerance for set point (how close before its cleared)
+    float setAlt = inputs.getAltitude(); //[m] set set point altitude above initial altitude
+    float setTolerance = inputs.getTolerance(); //tolerance for set point (how close before its cleared)
     uint8_t ndx(0);
     std::vector<Vec3f> circles; //vector for circles found by OpenCV
     usleep(100); // give some time to let it sink in
@@ -355,7 +360,7 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
 void genSetPoints(const float &D, Autopilot_Interface &api,
         vector<float> &xSetPoints, vector<float> &ySetPoints) {
     // <TODO: Update to allow passage of camera frame parameters>
-    float Fw(9.0); //[m]
+    float Fw(inputs.getFrame_Width()); //[m]
 
     // use these to track x and y displacement
     float dx(0.0), dy(0.0), sgn(0.0);
@@ -665,6 +670,11 @@ void quit_handler(int sig) {
 int main(int argc, char **argv) {
     // This program uses throw, wrap one big try/catch here
     try {
+		if (argc < 2) {
+			fprintf(stderr, "Input file is not specified!\n");
+			return 1;
+		}
+		inputs.setInputFile(argv[1]);
         int result = top(argc, argv);
         return result;
     } catch (int error) {
