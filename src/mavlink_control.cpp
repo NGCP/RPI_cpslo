@@ -80,7 +80,7 @@ int top(int argc, char **argv) {
     int dilation_size = 15, erode_size = 2;
 
     std::ofstream timer;
-    timer.open("/home/zhangh94/NGCP/ballFrames/solution1/Solution1TimeProfile", std::ofstream::out | std::ofstream::trunc);
+    timer.open("/home/pi/NGCP/ballFrames/solution1/Solution1TimeProfile", std::ofstream::out | std::ofstream::trunc);
     timer << "Frame, Time [s]\n";
 
     //store path names
