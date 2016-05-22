@@ -102,7 +102,7 @@ int top(int argc, char **argv) {
     std::vector<Vec3f> circles;
     Scalar m;
 
-    VideoCapture cap("/home/zhangh94/NGCP/ballFrames/ball_vid.avi");
+    VideoCapture cap("/home/pi/NGCP/ballFrames/ball_vid.avi");
     while (true) {
         cap >> frame;
 
