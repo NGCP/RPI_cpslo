@@ -1,4 +1,4 @@
-altitude = 7.0
+altitude = -6.0
 diagonal = 50.0
 tolerance = 1.0
 baud = 57600

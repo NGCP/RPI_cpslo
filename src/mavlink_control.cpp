@@ -394,7 +394,7 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
 
     //capture frame
     cam >> frame;
-    //    resize(frame, frame, Size(640, 360), 0, 0, INTER_CUBIC);
+    resize(frame, frame, Size(640, 360), 0, 0, INTER_CUBIC);
     video.write(frame);
 
     //convert to HSV space
