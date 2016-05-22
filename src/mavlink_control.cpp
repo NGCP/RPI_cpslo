@@ -345,10 +345,11 @@ void commands(Autopilot_Interface &api,
             // if ball is found, update setpoint to current position and return
             if (ballFound) {
                 //cam.release();
-                set_position(lpos.x, lpos.y, lpos.z, sp);
-                api.update_setpoint(sp);
+//                set_position(lpos.x, lpos.y, lpos.z, sp);
+//                api.update_setpoint(sp);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 11);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
+                std::cout << "Object found" << std::endl;
 //                return;
             }
 
@@ -357,7 +358,6 @@ void commands(Autopilot_Interface &api,
                 setPointReached = true;
                 break;
             }
-
             genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
         }
         genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 10);
@@ -540,8 +540,8 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Local_Pos << imu.time_usec << ", " <<
                 lpos.x << ", " << lpos.y << ", " << lpos.z << ", " <<
                 ltar.x << ", " << ltar.y << ", " << ltar.z << "\n";
-        std::cout << "Local Pos and target: " << lpos.x << ", " << lpos.y << ", " << lpos.z << ", " <<
-                ltar.x << ", " << ltar.y << ", " << ltar.z << "\n";
+//        std::cout << "Local Pos and target: " << lpos.x << ", " << lpos.y << ", " << lpos.z << ", " <<
+//                ltar.x << ", " << ltar.y << ", " << ltar.z << "\n";
 
         //print gpos and gtar
         Global_Pos << imu.time_usec << ", " <<
