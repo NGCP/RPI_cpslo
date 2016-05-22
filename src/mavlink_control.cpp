@@ -410,7 +410,7 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
     //erode to remove noise
     erode(redImg, redImg, preErode);
 
-    if (norm(mean(redImg)) > 0) {
+    if (norm(mean(redImg)) > .01) {
         originalImg = ogPath + std::to_string(nfound) + ".jpg";
         finalImg = finalPath + std::to_string(nfound) + ".jpg";
         imwrite(originalImg, frame);
@@ -603,10 +603,10 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
     }
 
     if (flag == 30) {
-        Local_Pos.open("Out_Local Position and Target", std::ofstream::out | std::ofstream::trunc);
-        Global_Pos.open("Out_Global Position and Target", std::ofstream::out | std::ofstream::trunc);
-        Attitude.open("Out_Attitude", std::ofstream::out | std::ofstream::trunc);
-        HR_IMU.open("Out_IMU Data", std::ofstream::out | std::ofstream::trunc);
+        Local_Pos.open("/home/pi/NGCP/RPI_cpslo/Datalogs/Out_Local Position and Target", std::ofstream::out | std::ofstream::trunc);
+        Global_Pos.open("/home/pi/NGCP/RPI_cpslo/Datalogs/Out_Global Position and Target", std::ofstream::out | std::ofstream::trunc);
+        Attitude.open("/home/pi/NGCP/RPI_cpslo/Datalogs/Out_Attitude", std::ofstream::out | std::ofstream::trunc);
+        HR_IMU.open("/home/pi/NGCP/RPI_cpslo/Datalogs/Out_IMU Data", std::ofstream::out | std::ofstream::trunc);
     }
 
     if (flag == 31) {
