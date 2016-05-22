@@ -69,8 +69,8 @@
 using namespace cv;
 
 Mat preErode = getStructuringElement(MORPH_ELLIPSE,
-        Size(2 * 1 + 1, 2 * 1 + 1),
-        Point(1, 1));
+        Size(2 * 2 + 1, 2 * 2 + 1),
+        Point(2, 2));
 // <TODO: remove this from being global later>
 input_params inputs = input_params();
 
@@ -344,7 +344,7 @@ void commands(Autopilot_Interface &api,
 
             // if ball is found, update setpoint to current position and return
             if (ballFound) {
-                cam.release();
+                //cam.release();
                 set_position(lpos.x, lpos.y, lpos.z, sp);
                 api.update_setpoint(sp);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 11);
@@ -410,7 +410,7 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
     //erode to remove noise
     erode(redImg, redImg, preErode);
 
-    if (norm(mean(redImg)) > .01) {
+    if (norm(mean(redImg)) > .1) {
         originalImg = ogPath + std::to_string(nfound) + ".jpg";
         finalImg = finalPath + std::to_string(nfound) + ".jpg";
         imwrite(originalImg, frame);
