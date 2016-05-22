@@ -57,6 +57,7 @@
 #include <vector>
 #include <cassert>
 #include <unistd.h>
+#include <string>
 #include <opencv2/opencv.hpp>
 
 #include "mavlink_control.h"
@@ -71,6 +72,94 @@ using namespace cv;
 input_params inputs = input_params();
 
 int top(int argc, char **argv) {
+    int ndx(1), nfound(0);
+    std::string result, jpg, solution1;
+    double tim;
+    clock_t ti, tf;
+    Mat frame, hsv, upL, downL, redImg, dilateF, erodeF, endF;
+    int dilation_size = 15, erode_size = 2;
+
+    std::ofstream timer;
+    timer.open("/home/zhangh94/NGCP/ballFrames/solution1/Solution1TimeProfile", std::ofstream::out | std::ofstream::trunc);
+    timer << "Frame, Time [s]\n";
+
+    //store path names
+    solution1 = "/home/pi/NGCP/ballFrames/solution1/frame";
+    jpg = ".jpg";
+
+    Mat dilateE = getStructuringElement(MORPH_ELLIPSE,
+            Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+            Point(dilation_size, dilation_size));
+
+    Mat preErode = getStructuringElement(MORPH_ELLIPSE,
+            Size(2 * 1 + 1, 2 * 1 + 1),
+            Point(1, 1));
+
+    Mat erodeE = getStructuringElement(MORPH_ELLIPSE,
+            Size(2 * erode_size + 1, 2 * erode_size + 1),
+            Point(erode_size, erode_size));
+
+    std::vector<Vec3f> circles;
+    Scalar m;
+
+    VideoCapture cap("/home/zhangh94/NGCP/ballFrames/ball_vid.avi");
+    while (true) {
+        cap >> frame;
+
+        if (!frame.data) {
+            std::cout << "Error reading ball frame" << ndx << std::endl;
+            std::cout << "Done and found " << nfound << "/" << ndx << " circles" << std::endl;
+            return -1;
+        }
+        ndx++;
+        //begin timer;
+        ti = clock();
+
+        //hsv
+        cvtColor(frame, hsv, CV_BGR2HSV);
+
+        //filter 
+        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downL);
+        inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upL);
+        addWeighted(downL, 1.0, upL, 1.0, 0.0, redImg);
+
+        //erode
+        erode(redImg, redImg, preErode);
+
+        //calculate mean or magnitude and only continue if greater than threshold
+        m = mean(redImg);
+
+        if (norm(m) > 0) {
+            //dilate
+            dilate(redImg, dilateF, dilateE);
+            //erode
+            erode(dilateF, erodeF, erodeE);
+            //hough
+            HoughCircles(erodeF, circles, CV_HOUGH_GRADIENT, 2, erodeF.rows / 2, 100, 50);
+        }
+        tf = clock();
+        tim = ((double) tf - (double) ti) / (double) CLOCKS_PER_SEC;
+        timer << "Frame" << ndx << ", " << tim << std::endl;
+
+        if (circles.size() > 0) {
+            nfound++;
+            endF = frame.clone();
+            // draw circle
+            for (size_t i = 0; i < circles.size(); i++) {
+                Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+                int radius = cvRound(circles[i][2]);
+                // circle center
+                circle(endF, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+                // circle outline
+                circle(endF, center, radius, Scalar(0, 0, 255), 3, 8, 0);
+            }
+            // save images
+            result = solution1 + std::to_string(ndx) + jpg;
+            imwrite(result, endF);
+            std::cout << "Ball found in frame" << ndx << std::endl;
+            circles.clear();
+        }
+    }
 
     // --------------------------------------------------------------------------
     //   PARSE THE COMMANDS
@@ -127,7 +216,7 @@ int top(int argc, char **argv) {
      *
      */
     // <Instantiates object and initializes values to 0>
-	sleep(5);
+    sleep(5);
     Autopilot_Interface autopilot_interface(&serial_port);
 
     /*
@@ -168,7 +257,7 @@ int top(int argc, char **argv) {
     // <TODO: Throw this into a function>
     // Instantiate VideoCapture object
     VideoCapture cam(videoN); //open video1
-    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M','J','P','G'), 30, Size(inputs.getVideo_Width(),inputs.getVideo_Height()), true);
+    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(inputs.getVideo_Width(), inputs.getVideo_Height()), true);
     sleep(1); //sleep for a second
 
     //set camera resolution
@@ -416,7 +505,7 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
 // throws EXIT_FAILURE if could not open the port
 
 void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
-        std::ofstream &Attitude, std::ofstream &HR_IMU, Autopilot_Interface &api,int flag) {
+        std::ofstream &Attitude, std::ofstream &HR_IMU, Autopilot_Interface &api, int flag) {
 
     // Specify type of message to write to data logs with flag
     // <TODO: Make the flags an enum>
@@ -526,61 +615,61 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
 }
 
 void append_to_data_log() {
-   time_t cur_time_stamp;
-   string line;
+    time_t cur_time_stamp;
+    string line;
 
-   /*Creating file based on timestamp*/
-   time(&cur_time_stamp);
-   std::ofstream data_log;
-   data_log.open(ctime(&cur_time_stamp));
+    /*Creating file based on timestamp*/
+    time(&cur_time_stamp);
+    std::ofstream data_log;
+    data_log.open(ctime(&cur_time_stamp));
 
-   /*Read from Out_Attitude File*/
-   std::ifstream attitude_file ("Out_Attitude");
-   if (attitude_file.is_open()) {
-      while ( getline (attitude_file,line) ) {
-         data_log << line << '\n';
-      }
-
-      attitude_file.close();
-   }
-
-   data_log << '\n' << '\n';
-
-   std::ifstream global_file ("Out_Global Position and Target");
-      if (global_file.is_open()) {
-         while ( getline (global_file,line) ) {
+    /*Read from Out_Attitude File*/
+    std::ifstream attitude_file("Out_Attitude");
+    if (attitude_file.is_open()) {
+        while (getline(attitude_file, line)) {
             data_log << line << '\n';
-         }
+        }
 
-         global_file.close();
-         remove("Out_Global Position and Target");
-      }
+        attitude_file.close();
+    }
 
-   data_log << '\n' << '\n';
+    data_log << '\n' << '\n';
 
-   std::ifstream local_file ("Out_Local Position and Target");
-      if (local_file.is_open()) {
-         while ( getline (local_file,line) ) {
+    std::ifstream global_file("Out_Global Position and Target");
+    if (global_file.is_open()) {
+        while (getline(global_file, line)) {
             data_log << line << '\n';
-         }
+        }
 
-         local_file.close();
-         remove("Out_Local Position and Target");
-      }
+        global_file.close();
+        remove("Out_Global Position and Target");
+    }
 
-   data_log << '\n' << '\n';
+    data_log << '\n' << '\n';
 
-   std::ifstream imu_file ("Out_IMU Data");
-      if (imu_file.is_open()) {
-         while ( getline (imu_file,line) ) {
+    std::ifstream local_file("Out_Local Position and Target");
+    if (local_file.is_open()) {
+        while (getline(local_file, line)) {
             data_log << line << '\n';
-         }
+        }
 
-         imu_file.close();
-         remove ("Out_IMU Data");
-      }
+        local_file.close();
+        remove("Out_Local Position and Target");
+    }
 
-   data_log.close();
+    data_log << '\n' << '\n';
+
+    std::ifstream imu_file("Out_IMU Data");
+    if (imu_file.is_open()) {
+        while (getline(imu_file, line)) {
+            data_log << line << '\n';
+        }
+
+        imu_file.close();
+        remove("Out_IMU Data");
+    }
+
+    data_log.close();
 }
 
 void parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate, float &D) {
@@ -670,11 +759,13 @@ void quit_handler(int sig) {
 int main(int argc, char **argv) {
     // This program uses throw, wrap one big try/catch here
     try {
-		if (argc < 2) {
-			fprintf(stderr, "Input file is not specified!\n");
-			return 1;
-		}
-		inputs.setInputFile(argv[1]);
+        if (argc < 2) {
+            fprintf(stderr, "Input file is not specified!\n");
+            //			return 1;
+        }
+        if (argc == 2) {
+            inputs.setInputFile(argv[1]);
+        }
         int result = top(argc, argv);
         return result;
     } catch (int error) {
