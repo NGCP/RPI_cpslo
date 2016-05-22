@@ -68,98 +68,87 @@
 // ------------------------------------------------------------------------------
 using namespace cv;
 
+Mat preErode = getStructuringElement(MORPH_ELLIPSE,
+        Size(2 * 1 + 1, 2 * 1 + 1),
+        Point(1, 1));
 // <TODO: remove this from being global later>
 input_params inputs = input_params();
 
 int top(int argc, char **argv) {
-    int ndx(1), nfound(0);
-    std::string result, jpg, solution1;
-    double tim;
-    clock_t ti, tf;
-    Mat frame, hsv, upL, downL, redImg, dilateF, erodeF, endF;
-    int dilation_size = 15, erode_size = 2;
 
-    std::ofstream timer;
-    timer.open("/home/pi/NGCP/ballFrames/solution1/Solution1TimeProfile", std::ofstream::out | std::ofstream::trunc);
-    timer << "Frame, Time [s]\n";
+    //    int ndx(1), nfound(0);
+    //    std::string result, jpg, solution1;
+    //    double tim;
+    //    clock_t ti, tf;
+    //    Mat frame, hsv, upL, downL, redImg, dilateF, erodeF, endF;
+    //    int dilation_size = 15, erode_size = 2;
+    //
+    //    std::ofstream timer;
+    //    timer.open("/home/pi/NGCP/ballFrames/solution1/Solution1TimeProfile", std::ofstream::out | std::ofstream::trunc);
+    //    timer << "Frame, Time [s]\n";
+    //
+    //    //store path names
+    //    solution1 = "/home/pi/NGCP/ballFrames/solution1/frame";
+    //    jpg = ".jpg";
 
-    //store path names
-    solution1 = "/home/pi/NGCP/ballFrames/solution1/frame";
-    jpg = ".jpg";
-
-    Mat dilateE = getStructuringElement(MORPH_ELLIPSE,
-            Size(2 * dilation_size + 1, 2 * dilation_size + 1),
-            Point(dilation_size, dilation_size));
-
-    Mat preErode = getStructuringElement(MORPH_ELLIPSE,
-            Size(2 * 1 + 1, 2 * 1 + 1),
-            Point(1, 1));
-
-    Mat erodeE = getStructuringElement(MORPH_ELLIPSE,
-            Size(2 * erode_size + 1, 2 * erode_size + 1),
-            Point(erode_size, erode_size));
-
-    std::vector<Vec3f> circles;
-    Scalar m;
-
-    VideoCapture cap("/home/pi/NGCP/ballFrames/ball_vid.avi");
-    while (true) {
-        cap >> frame;
-
-        if (!frame.data) {
-            std::cout << "Error reading ball frame" << ndx << std::endl;
-            std::cout << "Done and found " << nfound << "/" << ndx << " circles" << std::endl;
-            return -1;
-        }
-        ndx++;
-        //begin timer;
-        ti = clock();
-
-        //hsv
-        cvtColor(frame, hsv, CV_BGR2HSV);
-
-        //filter 
-        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downL);
-        inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upL);
-        addWeighted(downL, 1.0, upL, 1.0, 0.0, redImg);
-
-        //erode
-        erode(redImg, redImg, preErode);
-
-        //calculate mean or magnitude and only continue if greater than threshold
-        m = mean(redImg);
-
-        if (norm(m) > 0) {
-            //dilate
-            dilate(redImg, dilateF, dilateE);
-            //erode
-            erode(dilateF, erodeF, erodeE);
-            //hough
-            HoughCircles(erodeF, circles, CV_HOUGH_GRADIENT, 2, erodeF.rows / 2, 100, 50);
-        }
-        tf = clock();
-        tim = ((double) tf - (double) ti) / (double) CLOCKS_PER_SEC;
-        timer << "Frame" << ndx << ", " << tim << std::endl;
-
-        if (circles.size() > 0) {
-            nfound++;
-            endF = frame.clone();
-            // draw circle
-            for (size_t i = 0; i < circles.size(); i++) {
-                Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-                int radius = cvRound(circles[i][2]);
-                // circle center
-                circle(endF, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-                // circle outline
-                circle(endF, center, radius, Scalar(0, 0, 255), 3, 8, 0);
-            }
-            // save images
-            result = solution1 + std::to_string(ndx) + jpg;
-            imwrite(result, endF);
-            std::cout << "Ball found in frame" << ndx << std::endl;
-            circles.clear();
-        }
-    }
+    //    VideoCapture cap("/home/pi/NGCP/ballFrames/ball_vid.avi");
+    //    while (true) {
+    //        cap >> frame;
+    //
+    //        if (!frame.data) {
+    //            std::cout << "Error reading ball frame" << ndx << std::endl;
+    //            std::cout << "Done and found " << nfound << "/" << ndx << " circles" << std::endl;
+    //            return -1;
+    //        }
+    //        ndx++;
+    //        //begin timer;
+    //        ti = clock();
+    //
+    //        //hsv
+    //        cvtColor(frame, hsv, CV_BGR2HSV);
+    //
+    //        //filter 
+    //        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downL);
+    //        inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upL);
+    //        addWeighted(downL, 1.0, upL, 1.0, 0.0, redImg);
+    //
+    //        //erode
+    //        erode(redImg, redImg, preErode);
+    //
+    //        //calculate mean or magnitude and only continue if greater than threshold
+    //        m = mean(redImg);
+    //
+    //        if (norm(m) > 0) {
+    //            //dilate
+    //            dilate(redImg, dilateF, dilateE);
+    //            //erode
+    //            erode(dilateF, erodeF, erodeE);
+    //            //hough
+    //            HoughCircles(erodeF, circles, CV_HOUGH_GRADIENT, 2, erodeF.rows / 2, 100, 50);
+    //        }
+    //        tf = clock();
+    //        tim = ((double) tf - (double) ti) / (double) CLOCKS_PER_SEC;
+    //        timer << "Frame" << ndx << ", " << tim << std::endl;
+    //
+    //        if (circles.size() > 0) {
+    //            nfound++;
+    //            endF = frame.clone();
+    //            // draw circle
+    //            for (size_t i = 0; i < circles.size(); i++) {
+    //                Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+    //                int radius = cvRound(circles[i][2]);
+    //                // circle center
+    //                circle(endF, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+    //                // circle outline
+    //                circle(endF, center, radius, Scalar(0, 0, 255), 3, 8, 0);
+    //            }
+    //            // save images
+    //            result = solution1 + std::to_string(ndx) + jpg;
+    //            imwrite(result, endF);
+    //            std::cout << "Ball found in frame" << ndx << std::endl;
+    //            circles.clear();
+    //        }
+    //    }
 
     // --------------------------------------------------------------------------
     //   PARSE THE COMMANDS
@@ -351,7 +340,6 @@ void commands(Autopilot_Interface &api,
         while (!setPointReached) {
             mavlink_local_position_ned_t lpos = api.current_messages.local_position_ned;
 
-            // <TODO: Insert CV Code here>
             ballFound = checkFrame(cam, video, circles);
 
             // if ball is found, update setpoint to current position and return
@@ -359,8 +347,9 @@ void commands(Autopilot_Interface &api,
                 cam.release();
                 set_position(lpos.x, lpos.y, lpos.z, sp);
                 api.update_setpoint(sp);
+                genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 11);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
-                return;
+//                return;
             }
 
             // <TODO: Implement position check to occur less often (lower priority) >
@@ -369,7 +358,7 @@ void commands(Autopilot_Interface &api,
                 break;
             }
 
-
+            genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
         }
         genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 10);
         genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
@@ -397,10 +386,15 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
     Mat upLim; //Mat to store HSV image with upper limit applied
     Mat downLim; //Mat to store HSV image with lower limit applied
     Mat redImg; //Mat to store HSV image with combined upper and lower limits
+    Scalar val; //Scalar to store value for mean of an Mat img
+    static int nfound(1);
+    std::string ogPath, finalPath, originalImg, finalImg;
+    ogPath = "/home/pi/NGCP/RPI_cpslo/Datalogs/OriginalImg";
+    finalPath = "/home/pi/NGCP/RPI_cpslo/Datalogs/FinalImg";
 
     //capture frame
     cam >> frame;
-    resize(frame, frame, Size(640, 360), 0, 0, INTER_CUBIC);
+    //    resize(frame, frame, Size(640, 360), 0, 0, INTER_CUBIC);
     video.write(frame);
 
     //convert to HSV space
@@ -413,36 +407,47 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
     //combine two ranges into single image
     addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
 
-    //apply Gaussian blur to improve detection
-    GaussianBlur(redImg, redImg, Size(9, 9), 2, 2);
+    //erode to remove noise
+    erode(redImg, redImg, preErode);
 
-    //apply Hough transform (configured to only really work at 7m)
-    //inputArray, outputArray, method, dp, minDistance, param1, param2, minR, maxR
-    //redImg is 320x240
-    HoughCircles(redImg, circles, CV_HOUGH_GRADIENT, 1, redImg.rows / 2, 50, 24, 5, 9);
-    //if circle is found, save image and return true
-    if (circles.size() > 0) {
-
-        // clone original frame to draw circle on
-        Mat endFrame = frame.clone();
-
-        // draw circle
-        for (size_t i = 0; i < circles.size(); i++) {
-            Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-            int radius = cvRound(circles[i][2]);
-            // circle center
-            circle(endFrame, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-            // circle outline
-            circle(endFrame, center, radius, Scalar(0, 0, 255), 3, 8, 0);
-        }
-
-        // save images
-        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/OriginalImg.jpg", frame);
-        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/HSVImg.jpg", redImg);
-        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/FinalImg.jpg", endFrame);
-
+    if (norm(mean(redImg)) > 0) {
+        originalImg = ogPath + std::to_string(nfound) + ".jpg";
+        finalImg = finalPath + std::to_string(nfound) + ".jpg";
+        imwrite(originalImg, frame);
+        imwrite(finalImg, redImg);
+        nfound++;
         return true;
     }
+
+    //    
+    //    //apply Gaussian blur to improve detection
+    //    GaussianBlur(redImg, redImg, Size(9, 9), 2, 2);
+    //
+    //    //apply Hough transform (configured to only really work at 7m)
+    //    //inputArray, outputArray, method, dp, minDistance, param1, param2, minR, maxR
+    //    //redImg is 320x240
+    //    HoughCircles(redImg, circles, CV_HOUGH_GRADIENT, 1, redImg.rows / 2, 50, 24, 5, 9);
+    //    //if circle is found, save image and return true
+    //    if (circles.size() > 0) {
+    //
+    //        // clone original frame to draw circle on
+    //        Mat endFrame = frame.clone();
+    //
+    //        // draw circle
+    //        for (size_t i = 0; i < circles.size(); i++) {
+    //            Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+    //            int radius = cvRound(circles[i][2]);
+    //            // circle center
+    //            circle(endFrame, center, 3, Scalar(0, 255, 0), -1, 8, 0);
+    //            // circle outline
+    //            circle(endFrame, center, radius, Scalar(0, 0, 255), 3, 8, 0);
+    //        }
+    //
+    //        // save images
+    //        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/OriginalImg.jpg", frame);
+    //        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/HSVImg.jpg", redImg);
+    //        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/FinalImg.jpg", endFrame);
+
     return false;
 }
 
@@ -514,6 +519,7 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
      *  1   - append single line of data to all output files
      *  2   - append initial position line to Local Position NED file
      *  10  - append set point reached message to all output files
+     *  11  - append ball found at following... messag to all output files
      *  20  - append header line to all output files
      *  30  - open all threads for writing
      *  31  - close all threads
@@ -567,6 +573,13 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Global_Pos << "Set point reached within tolerance\n";
         Attitude << "Set point reached within tolerance\n";
         HR_IMU << "Set point reached within tolerance\n";
+    }
+    if (flag == 11) {
+        //
+        Local_Pos << "Ball found at following location\n";
+        Global_Pos << "Ball found at following location\n";
+        Attitude << "Ball found at following attitude\n";
+        HR_IMU << "Ball found at following flight condition\n";
     }
 
     if (flag == 20) {

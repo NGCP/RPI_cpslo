@@ -98,7 +98,7 @@ float input_params::getDiagonal() const {
 }
 
 float input_params::getAltitude() const {
-	return altitude.isWritten ? altitude.value : 6.0;
+	return altitude.isWritten ? altitude.value : -6.0;
 }
 
 float input_params::getTolerance() const {
