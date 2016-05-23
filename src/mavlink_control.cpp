@@ -76,80 +76,6 @@ input_params inputs = input_params();
 
 int top(int argc, char **argv) {
 
-    //    int ndx(1), nfound(0);
-    //    std::string result, jpg, solution1;
-    //    double tim;
-    //    clock_t ti, tf;
-    //    Mat frame, hsv, upL, downL, redImg, dilateF, erodeF, endF;
-    //    int dilation_size = 15, erode_size = 2;
-    //
-    //    std::ofstream timer;
-    //    timer.open("/home/pi/NGCP/ballFrames/solution1/Solution1TimeProfile", std::ofstream::out | std::ofstream::trunc);
-    //    timer << "Frame, Time [s]\n";
-    //
-    //    //store path names
-    //    solution1 = "/home/pi/NGCP/ballFrames/solution1/frame";
-    //    jpg = ".jpg";
-
-    //    VideoCapture cap("/home/pi/NGCP/ballFrames/ball_vid.avi");
-    //    while (true) {
-    //        cap >> frame;
-    //
-    //        if (!frame.data) {
-    //            std::cout << "Error reading ball frame" << ndx << std::endl;
-    //            std::cout << "Done and found " << nfound << "/" << ndx << " circles" << std::endl;
-    //            return -1;
-    //        }
-    //        ndx++;
-    //        //begin timer;
-    //        ti = clock();
-    //
-    //        //hsv
-    //        cvtColor(frame, hsv, CV_BGR2HSV);
-    //
-    //        //filter 
-    //        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downL);
-    //        inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upL);
-    //        addWeighted(downL, 1.0, upL, 1.0, 0.0, redImg);
-    //
-    //        //erode
-    //        erode(redImg, redImg, preErode);
-    //
-    //        //calculate mean or magnitude and only continue if greater than threshold
-    //        m = mean(redImg);
-    //
-    //        if (norm(m) > 0) {
-    //            //dilate
-    //            dilate(redImg, dilateF, dilateE);
-    //            //erode
-    //            erode(dilateF, erodeF, erodeE);
-    //            //hough
-    //            HoughCircles(erodeF, circles, CV_HOUGH_GRADIENT, 2, erodeF.rows / 2, 100, 50);
-    //        }
-    //        tf = clock();
-    //        tim = ((double) tf - (double) ti) / (double) CLOCKS_PER_SEC;
-    //        timer << "Frame" << ndx << ", " << tim << std::endl;
-    //
-    //        if (circles.size() > 0) {
-    //            nfound++;
-    //            endF = frame.clone();
-    //            // draw circle
-    //            for (size_t i = 0; i < circles.size(); i++) {
-    //                Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-    //                int radius = cvRound(circles[i][2]);
-    //                // circle center
-    //                circle(endF, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-    //                // circle outline
-    //                circle(endF, center, radius, Scalar(0, 0, 255), 3, 8, 0);
-    //            }
-    //            // save images
-    //            result = solution1 + std::to_string(ndx) + jpg;
-    //            imwrite(result, endF);
-    //            std::cout << "Ball found in frame" << ndx << std::endl;
-    //            circles.clear();
-    //        }
-    //    }
-
     // --------------------------------------------------------------------------
     //   PARSE THE COMMANDS
     // --------------------------------------------------------------------------
@@ -246,7 +172,7 @@ int top(int argc, char **argv) {
     // <TODO: Throw this into a function>
     // Instantiate VideoCapture object
     VideoCapture cam(videoN); //open video1
-    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(inputs.getVideo_Width(), inputs.getVideo_Height()), true);
+    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M', 'J', 'P', 'G'), 7, Size(inputs.getVideo_Width(), inputs.getVideo_Height()), true);
     sleep(1); //sleep for a second
 
     //set camera resolution
@@ -418,35 +344,6 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
         nfound++;
         return true;
     }
-
-    //    
-    //    //apply Gaussian blur to improve detection
-    //    GaussianBlur(redImg, redImg, Size(9, 9), 2, 2);
-    //
-    //    //apply Hough transform (configured to only really work at 7m)
-    //    //inputArray, outputArray, method, dp, minDistance, param1, param2, minR, maxR
-    //    //redImg is 320x240
-    //    HoughCircles(redImg, circles, CV_HOUGH_GRADIENT, 1, redImg.rows / 2, 50, 24, 5, 9);
-    //    //if circle is found, save image and return true
-    //    if (circles.size() > 0) {
-    //
-    //        // clone original frame to draw circle on
-    //        Mat endFrame = frame.clone();
-    //
-    //        // draw circle
-    //        for (size_t i = 0; i < circles.size(); i++) {
-    //            Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-    //            int radius = cvRound(circles[i][2]);
-    //            // circle center
-    //            circle(endFrame, center, 3, Scalar(0, 255, 0), -1, 8, 0);
-    //            // circle outline
-    //            circle(endFrame, center, radius, Scalar(0, 0, 255), 3, 8, 0);
-    //        }
-    //
-    //        // save images
-    //        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/OriginalImg.jpg", frame);
-    //        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/HSVImg.jpg", redImg);
-    //        imwrite("/home/pi/NGCP/RPI_cpslo/Datalogs/FinalImg.jpg", endFrame);
 
     return false;
 }
