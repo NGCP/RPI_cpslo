@@ -1,14 +1,14 @@
 #!/bin/bash
 
-cd /home/pi/NGCP/RPI_cpslo
+#cd /home/pi/NGCP/RPI_cpslo
 
-git fetch
-git pull
+#git fetch
+#git pull
 
-mkdir build
-cd build
-cmake ..
-make
+#mkdir build
+#cd build
+#cmake ..
+#make
 
 ./rpi_cpslo ../params.txt &
 
