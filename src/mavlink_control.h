@@ -72,6 +72,17 @@ using namespace std;
 #include "autopilot_interface.h"
 #include "serial_port.h"
 
+// ------------------------------------------------------------------------------
+//   Struct definition
+// ------------------------------------------------------------------------------
+struct api_data {
+	mavlink_local_position_ned_t lpos;
+	mavlink_position_target_local_ned_t ltar;
+	mavlink_global_position_int_t gpos;
+	mavlink_position_target_global_int_t gtar;
+	mavlink_attitude_t att;
+	mavlink_highres_imu_t imu;
+}
 
 // ------------------------------------------------------------------------------
 //   Prototypes
@@ -90,7 +101,10 @@ void genSetPoints(const float &D, Autopilot_Interface &api,
 	vector<float> &xSetPoints, vector<float> &ySetPoints);
 void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
 	std::ofstream &Attitude, std::ofstream &HR_IMU, Autopilot_Interface &api, int flag);
-void append_to_data_log();
+
+void update_api_data(Autopilot_Interface &api, struct api_data *current_data);
+
+//void append_to_data_log();
 
 // quit handler
 Autopilot_Interface *autopilot_interface_quit;

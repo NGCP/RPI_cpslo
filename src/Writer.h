@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ctime>
 #include <cstdio>
+#include <mavlink_control.h>
 
 class Writer {
    private:
@@ -14,7 +15,7 @@ class Writer {
    public:
       void createFile();
       void createHeaders();
-      void write_initial_position(Autopilot_Interface api);
+      void write_initial_position(Autopilot_Interface &api);
       void write_data(struct api_data cur_struct);
       void write_set_point_reached();
       void closeFile();

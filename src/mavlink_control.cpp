@@ -61,6 +61,7 @@
 
 #include "mavlink_control.h"
 #include "input_params.h"
+#include "Writer.h"
 #include <iostream>
 // ------------------------------------------------------------------------------
 //   TOP
@@ -230,6 +231,10 @@ void commands(Autopilot_Interface &api,
     float setTolerance = inputs.getTolerance(); //tolerance for set point (how close before its cleared)
     uint8_t ndx(0);
     std::vector<Vec3f> circles; //vector for circles found by OpenCV
+
+    Writer writer = Writer();
+    struct api_data current_data;
+
     usleep(100); // give some time to let it sink in
 
     bool setPointReached = false, ballFound = false;
@@ -249,6 +254,10 @@ void commands(Autopilot_Interface &api,
     genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 20);
     genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 2);
 
+    writer.createFile();
+    writer.createHeaders();
+    writer.write_initial_position(api);
+
     assert(xSetPoints.size() == ySetPoints.size());
 
     for (ndx = 0; ndx < xSetPoints.size(); ndx++) {
@@ -258,6 +267,10 @@ void commands(Autopilot_Interface &api,
         setPointReached = false;
 
         genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
+
+        update_api_data(api, &current_data);
+        write_data(current_data);
+
         //loop until set point is reached
         while (!setPointReached) {
             mavlink_local_position_ned_t lpos = api.current_messages.local_position_ned;
@@ -271,6 +284,10 @@ void commands(Autopilot_Interface &api,
                 set_position(lpos.x, lpos.y, lpos.z, sp);
                 api.update_setpoint(sp);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
+
+                update_api_data(api, &current_data);
+                write_data(current_data);
+
                 return;
             }
 
@@ -284,6 +301,11 @@ void commands(Autopilot_Interface &api,
         }
         genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 10);
         genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
+
+        writer.write_set_point_reached();
+        update_api_data(api, &current_data);
+        write_data(current_data);
+
         sleep(1); //wait a second for vehicle to catch up
     }
 
@@ -297,6 +319,10 @@ void commands(Autopilot_Interface &api,
 
     genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 20);
     genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 31);
+
+    writer.createHeaders();
+    writer.closeFile();
+
     return;
 }
 
@@ -514,7 +540,7 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         HR_IMU.close();
         flush = false; //dont need to flush if streams already closed
 
-        append_to_data_log();
+        //append_to_data_log();
     }
     if (flush) {
         //flush buffer
@@ -525,16 +551,23 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
     }
 }
 
-void append_to_data_log() {
+void update_api_data(Autopilot_Interface &api, struct api_data *current_data) {
+   current_data->lpos = api.current_messages.local_position_ned;
+   current_data->ltar = api.current_messages.position_target_local_ned;
+   current_data->gpos = api.current_messages.global_position_int;
+   current_data->gtar = api.current_messages.position_target_global_int;
+   mcurrent_data->att = api.current_messages.attitude;
+   current_data->imu = api.current_messages.highres_imu;
+}
+
+/*void append_to_data_log() {
    time_t cur_time_stamp;
    string line;
 
-   /*Creating file based on timestamp*/
    time(&cur_time_stamp);
    std::ofstream data_log;
    data_log.open(ctime(&cur_time_stamp));
 
-   /*Read from Out_Attitude File*/
    std::ifstream attitude_file ("Out_Attitude");
    if (attitude_file.is_open()) {
       while ( getline (attitude_file,line) ) {
@@ -581,7 +614,7 @@ void append_to_data_log() {
       }
 
    data_log.close();
-}
+}*/
 
 void parse_commandline(int argc, char **argv, char *&uart_name, int &baudrate, float &D) {
 
