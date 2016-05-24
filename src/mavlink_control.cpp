@@ -76,6 +76,57 @@ input_params inputs = input_params();
 
 int top(int argc, char **argv) {
 
+    
+    //diagnosis section to find better match for hsv range
+//    int ndx1(1), n1(1000), n2(1200);
+//    Mat frame, hsv, downLim, upLim, redImg;
+//    std::string path, jpg, result, home;
+//    jpg = ".jpg";
+//    path = "/home/zhangh94/NGCP/BallVids/framesDiag/process/frame";
+//    home = "/home/zhangh94/NGCP/BallVids/framesDiag/frame";
+//    VideoCapture vid1("/home/zhangh94/NGCP/BallVids/ball_vid.avi");
+//    while (true) {
+//        vid1 >> frame;
+//        if(! frame.data) break;
+//        result = home + std::to_string(ndx1) + jpg;
+//        imwrite(result, frame);
+//        ndx1++;
+//    }
+//    
+//    //load in frames and store
+//    std::ofstream logs;
+//    logs.open("/home/zhangh94/NGCP/BallVids/framesDiag/process/logs", std::ofstream::out | std::ofstream::trunc);
+//    logs << "Mean, Norm, norm(mean)" << std::endl;
+//
+//    for (ndx1 = n1; ndx1 <= n2; ndx1++) {
+//        result = home + std::to_string(ndx1) + jpg;
+//        frame = imread(result);
+//
+//        if (!frame.data) {
+//            std::cout << "error" << std::endl;
+//            break;
+//        }
+//
+//        //convert to HSV space
+//        cvtColor(frame, hsv, CV_BGR2HSV);
+//
+//        // <TODO: remove hard coded limits>
+//        //        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downLim);
+//        inRange(hsv, Scalar(135, 100, 100), Scalar(160, 255, 255), redImg);
+//
+//        //combine two ranges into single image
+//        //        addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
+//
+//        //erode to remove noise
+//        erode(redImg, redImg, preErode);
+//        result = path + std::to_string(ndx1) + jpg;
+//        imwrite(result, redImg);
+//        logs << mean(redImg) << ", " << norm(redImg) << ", " << norm(mean(redImg)) << std::endl;
+//    }
+//    logs.close();
+//    std::cout << "Hereee" << std::endl;
+//
+//    return 0;
     // --------------------------------------------------------------------------
     //   PARSE THE COMMANDS
     // --------------------------------------------------------------------------
@@ -172,7 +223,7 @@ int top(int argc, char **argv) {
     // <TODO: Throw this into a function>
     // Instantiate VideoCapture object
     VideoCapture cam(videoN); //open video1
-    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M', 'J', 'P', 'G'), 7, Size(inputs.getVideo_Width(), inputs.getVideo_Height()), true);
+    VideoWriter video("/home/pi/NGCP/RPI_cpslo/Datalogs/ball_vid.avi", CV_FOURCC('M', 'J', 'P', 'G'), 15, Size(inputs.getVideo_Width(), inputs.getVideo_Height()), true);
     sleep(1); //sleep for a second
 
     //set camera resolution
@@ -270,13 +321,14 @@ void commands(Autopilot_Interface &api,
 
             // if ball is found, update setpoint to current position and return
             if (ballFound) {
-                //cam.release();
-//                set_position(lpos.x, lpos.y, lpos.z, sp);
-//                api.update_setpoint(sp);
+                cam.release();
+                video.release();
+                set_position(lpos.x, lpos.y, ip.z - setAlt, sp);
+                api.update_setpoint(sp);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 11);
                 genDatalogs(Local_Pos, Global_Pos, Attitude, HR_IMU, api, 1);
                 std::cout << "Object found" << std::endl;
-//                return;
+                return;
             }
 
             // <TODO: Implement position check to occur less often (lower priority) >
@@ -304,8 +356,6 @@ void commands(Autopilot_Interface &api,
     return;
 }
 
-//Function to generate array of setpoints give a search box diagonal distance
-
 bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circles) {
     Mat frame; //Mat to store current frame from camera
     Mat hsv; //Mat to store transformed HSV space image
@@ -314,6 +364,7 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
     Mat redImg; //Mat to store HSV image with combined upper and lower limits
     Scalar val; //Scalar to store value for mean of an Mat img
     static int nfound(1);
+    double nn;
     std::string ogPath, finalPath, originalImg, finalImg;
     ogPath = "/home/pi/NGCP/RPI_cpslo/Datalogs/OriginalImg";
     finalPath = "/home/pi/NGCP/RPI_cpslo/Datalogs/FinalImg";
@@ -326,17 +377,23 @@ bool checkFrame(VideoCapture &cam, VideoWriter &video, std::vector<Vec3f> &circl
     //convert to HSV space
     cvtColor(frame, hsv, CV_BGR2HSV);
 
-    // <TODO: remove hard coded limits>
-    inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downLim);
-    inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upLim);
+    //old code
+    //    // <TODO: remove hard coded limits>
+    //    inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downLim);
+    //    inRange(hsv, Scalar(160, 100, 100), Scalar(179, 255, 255), upLim);
+    //
+    //    //combine two ranges into single image
+    //    addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
 
-    //combine two ranges into single image
-    addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
+    //updated May 23
+    // <TODO: remove hard coded limits>
+    inRange(hsv, Scalar(135, 100, 100), Scalar(160, 255, 255), redImg);
 
     //erode to remove noise
     erode(redImg, redImg, preErode);
 
-    if (norm(mean(redImg)) > .1) {
+    nn = norm(mean(redImg));
+    if (nn > .1 && nn < 2) {
         originalImg = ogPath + std::to_string(nfound) + ".jpg";
         finalImg = finalPath + std::to_string(nfound) + ".jpg";
         imwrite(originalImg, frame);
@@ -437,8 +494,8 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         Local_Pos << imu.time_usec << ", " <<
                 lpos.x << ", " << lpos.y << ", " << lpos.z << ", " <<
                 ltar.x << ", " << ltar.y << ", " << ltar.z << "\n";
-//        std::cout << "Local Pos and target: " << lpos.x << ", " << lpos.y << ", " << lpos.z << ", " <<
-//                ltar.x << ", " << ltar.y << ", " << ltar.z << "\n";
+        //        std::cout << "Local Pos and target: " << lpos.x << ", " << lpos.y << ", " << lpos.z << ", " <<
+        //                ltar.x << ", " << ltar.y << ", " << ltar.z << "\n";
 
         //print gpos and gtar
         Global_Pos << imu.time_usec << ", " <<
@@ -513,7 +570,7 @@ void genDatalogs(std::ofstream &Local_Pos, std::ofstream &Global_Pos,
         HR_IMU.close();
         flush = false; //dont need to flush if streams already closed
 
-        append_to_data_log();
+//        append_to_data_log();
     }
     if (flush) {
         //flush buffer
