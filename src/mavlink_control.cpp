@@ -77,56 +77,56 @@ input_params inputs = input_params();
 int top(int argc, char **argv) {
 
     
-    //diagnosis section to find better match for hsv range
-    int ndx1(1), n1(1), n2(500);
-    Mat frame, hsv, downLim, upLim, redImg;
-    std::string path, jpg, result, home;
-    jpg = ".jpg";
-    path = "/home/zhangh94/NGCP/BallVids/framesDiag/process/frame";
-    home = "/home/zhangh94/NGCP/BallVids/framesDiag/frame";
-    VideoCapture vid1("/home/zhangh94/NGCP/BallVids/ball_vid.avi");
-    while (true) {
-        vid1 >> frame;
-        if(! frame.data) break;
-        result = home + std::to_string(ndx1) + jpg;
-        imwrite(result, frame);
-        ndx1++;
-    }
-    
-    //load in frames and store
-    std::ofstream logs;
-    logs.open("/home/zhangh94/NGCP/BallVids/framesDiag/process/logs", std::ofstream::out | std::ofstream::trunc);
-    logs << "Mean, Norm, norm(mean)" << std::endl;
-
-    for (ndx1 = n1; ndx1 <= n2; ndx1++) {
-        result = home + std::to_string(ndx1) + jpg;
-        frame = imread(result);
-
-        if (!frame.data) {
-            std::cout << "error" << std::endl;
-            break;
-        }
-
-        //convert to HSV space
-        cvtColor(frame, hsv, CV_BGR2HSV);
-
-        // <TODO: remove hard coded limits>
-        //        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downLim);
-        inRange(hsv, Scalar(135, 100, 100), Scalar(175, 255, 255), redImg);
-
-        //combine two ranges into single image
-        //        addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
-
-        //erode to remove noise
-        erode(redImg, redImg, preErode);
-        result = path + std::to_string(ndx1) + jpg;
-        imwrite(result, redImg);
-        logs << ndx1 << "," << mean(redImg) << ", " << norm(redImg) << ", " << norm(mean(redImg)) << std::endl;
-    }
-    logs.close();
-    std::cout << "Hereee" << std::endl;
-
-    return 0;
+//    //diagnosis section to find better match for hsv range
+//    int ndx1(1), n1(1), n2(500);
+//    Mat frame, hsv, downLim, upLim, redImg;
+//    std::string path, jpg, result, home;
+//    jpg = ".jpg";
+//    path = "/home/zhangh94/NGCP/BallVids/framesDiag/process/frame";
+//    home = "/home/zhangh94/NGCP/BallVids/framesDiag/frame";
+//    VideoCapture vid1("/home/zhangh94/NGCP/BallVids/ball_vid.avi");
+//    while (true) {
+//        vid1 >> frame;
+//        if(! frame.data) break;
+//        result = home + std::to_string(ndx1) + jpg;
+//        imwrite(result, frame);
+//        ndx1++;
+//    }
+//    
+//    //load in frames and store
+//    std::ofstream logs;
+//    logs.open("/home/zhangh94/NGCP/BallVids/framesDiag/process/logs", std::ofstream::out | std::ofstream::trunc);
+//    logs << "Mean, Norm, norm(mean)" << std::endl;
+//
+//    for (ndx1 = n1; ndx1 <= n2; ndx1++) {
+//        result = home + std::to_string(ndx1) + jpg;
+//        frame = imread(result);
+//
+//        if (!frame.data) {
+//            std::cout << "error" << std::endl;
+//            break;
+//        }
+//
+//        //convert to HSV space
+//        cvtColor(frame, hsv, CV_BGR2HSV);
+//
+//        // <TODO: remove hard coded limits>
+//        //        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), downLim);
+//        inRange(hsv, Scalar(135, 100, 100), Scalar(175, 255, 255), redImg);
+//
+//        //combine two ranges into single image
+//        //        addWeighted(downLim, 1.0, upLim, 1.0, 0.0, redImg);
+//
+//        //erode to remove noise
+//        erode(redImg, redImg, preErode);
+//        result = path + std::to_string(ndx1) + jpg;
+//        imwrite(result, redImg);
+//        logs << ndx1 << "," << mean(redImg) << ", " << norm(redImg) << ", " << norm(mean(redImg)) << std::endl;
+//    }
+//    logs.close();
+//    std::cout << "Hereee" << std::endl;
+//
+//    return 0;
     // --------------------------------------------------------------------------
     //   PARSE THE COMMANDS
     // --------------------------------------------------------------------------
